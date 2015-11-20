@@ -59,6 +59,9 @@ module.exports = (socket, channel)->
           if //^#{path}(\.[^\.]+)?$//.test change-path
             observer.emitter.emit path
             flat-emits.push path
+    merge: (partial) ->
+      revised = rivulet! <<< partial
+      rivulet revised
   if socket and channel
     rivulet.socket = socket
     rivulet.socket.on channel, ->

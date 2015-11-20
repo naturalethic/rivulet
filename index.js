@@ -94,6 +94,11 @@
           results$.push(lresult$);
         }
         return results$;
+      },
+      merge: function(partial){
+        var revised;
+        revised = import$(rivulet(), partial);
+        return rivulet(revised);
       }
     });
     if (socket && channel) {
