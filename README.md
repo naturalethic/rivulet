@@ -33,7 +33,7 @@ state! # { foo: 'bar' }
 ```
 
 ## set property
-Set/get take full dotted paths.
+Set/get take full dotted paths via [object-path](https://github.com/mariocasciaro/object-path)
 ```
 state.set 'bim.bam', 1
 state! # { foo: 'bar', bim: { bam: 1 } }
@@ -57,7 +57,8 @@ state! # { foo: 'bar', bim: { }, zim: 2 }
 ```
 
 ## observe property
-By default, objects will be observed at their location and all their immediate properties (called 'flat')
+By default, objects will be observed at their location and all their immediate properties (called 'flat').
+Providing a function is optional and will fire when a change occurs.  The method returns a [kefir](https://github.com/rpominov/kefir) stream.
 ```
 state.observe \foo, (obj) -> # If 'foo' changes, this function is called with a copy of state as a plain object
 ```
@@ -69,7 +70,7 @@ state.observe-deep # When the object reference or any descendants change
 ```
 
 ## patch
-Rivulet uses fast-json-patch internally, so such a patch can be applied here.  Not recommended, its for internal use.
+Rivulet uses [fast-json-patch](https://github.com/Starcounter-Jack/JSON-Patch) internally, so such a patch can be applied here.  Not recommended, its for internal use.
 ```
 state.patch diff
 ```
