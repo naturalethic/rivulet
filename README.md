@@ -13,7 +13,7 @@ npm install naturalethic/rivulet
 
 ## require
 ```
-rivulet = require! \rivulet
+require! \rivulet
 ```
 
 ## create
