@@ -5,6 +5,7 @@
     "bin": "./bin"
   },
   "files": [
+    "index.js"
   ],
   "repository": {
     "type": "git",
