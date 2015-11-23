@@ -5,13 +5,14 @@
   patch = require('fast-json-patch');
   objectPath = require('object-path');
   module.exports = function(socket, channel){
-    var state, observers, rivulet, emitStream;
+    var state, observers, emitQueue, rivulet, emitStream;
     state = {};
     observers = {
       atom: {},
       flat: {},
       deep: {}
     };
+    emitQueue = [];
     rivulet = function(it){
       if (it) {
         return rivulet.patch(patch.compare(state, it));
@@ -20,6 +21,7 @@
       }
     };
     import$(rivulet, {
+      logger: null,
       get: function(path){
         return objectPath.get(state, path);
       },
@@ -61,9 +63,15 @@
       observeDeep: function(path, func){
         return rivulet.observe(path, func, 'deep');
       },
-      patch: function(diff){
+      patch: function(diff, emit){
         var deepEmits, flatEmits, i$, len$, change, lresult$, changePath, path, ref$, observer, results$ = [];
-        rivulet.last = diff;
+        emit == null && (emit = true);
+        if (!diff.length) {
+          return;
+        }
+        if (emit) {
+          emitQueue.push(diff);
+        }
         deepEmits = [];
         flatEmits = [];
         patch.apply(state, diff);
@@ -107,17 +115,21 @@
     if (socket && channel) {
       rivulet.socket = socket;
       rivulet.socket.on(channel, function(it){
-        emitStream.pause = true;
-        rivulet.patch(it);
-        return emitStream.pause = false;
+        if (rivulet.logger) {
+          rivulet.logger('Rivulet received', it);
+        }
+        return rivulet.patch(it, false);
       });
       emitStream = rivulet.observeDeep('');
-      emitStream.pause = false;
       emitStream.onValue(function(){
-        if (emitStream.pause) {
-          return;
+        var diff, results$ = [];
+        while (diff = emitQueue.pop()) {
+          if (rivulet.logger) {
+            rivulet.logger('Rivulet sending', diff);
+          }
+          results$.push(socket.emit(channel, diff));
         }
-        return socket.emit(channel, rivulet.last);
+        return results$;
       });
     }
     return rivulet;

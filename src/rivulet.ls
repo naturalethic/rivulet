@@ -13,12 +13,14 @@ module.exports = (socket, channel)->
     atom: {}
     flat: {}
     deep: {}
+  emit-queue = []
   rivulet = ->
     if it
       rivulet.patch patch.compare state, it
     else
       JSON.parse(JSON.stringify state)
   rivulet <<< do
+    logger: null
     get: (path) ->
       object-path.get state, path
     set: (path, val) ->
@@ -42,8 +44,9 @@ module.exports = (socket, channel)->
     observe-atom: (path, func) -> rivulet.observe path, func, \atom
     observe-flat: (path, func) -> rivulet.observe path, func, \flat
     observe-deep: (path, func) -> rivulet.observe path, func, \deep
-    patch: (diff) ->
-      rivulet.last = diff
+    patch: (diff, emit = true) ->
+      return if not diff.length
+      emit-queue.push diff if emit
       deep-emits = []
       flat-emits = []
       patch.apply state, diff
@@ -67,14 +70,13 @@ module.exports = (socket, channel)->
   if socket and channel
     rivulet.socket = socket
     rivulet.socket.on channel, ->
-      emit-stream.pause = true
-      rivulet.patch it
-      emit-stream.pause = false
+      rivulet.logger 'Rivulet received', it if rivulet.logger
+      rivulet.patch it, false
     emit-stream = rivulet.observe-deep ''
-    emit-stream.pause = false
     emit-stream.on-value ->
-      return if emit-stream.pause
-      socket.emit channel, rivulet.last
+      while diff = emit-queue.pop!
+        rivulet.logger 'Rivulet sending', diff if rivulet.logger
+        socket.emit channel, diff
   rivulet
 
 
