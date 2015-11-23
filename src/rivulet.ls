@@ -26,7 +26,9 @@ module.exports = (socket, channel)->
       object-path.set revised, path, val
       rivulet revised
     del: (path) ->
-      object-path.del state, path
+      revised = rivulet!
+      object-path.del revised, path
+      rivulet revised
     observe: (path, func, depth = \flat) ->
       if not observers[depth][path]
         observers[depth][path] = {}

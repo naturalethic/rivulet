@@ -30,7 +30,10 @@
         return rivulet(revised);
       },
       del: function(path){
-        return objectPath.del(state, path);
+        var revised;
+        revised = rivulet();
+        objectPath.del(revised, path);
+        return rivulet(revised);
       },
       observe: function(path, func, depth){
         depth == null && (depth = 'flat');
