@@ -2,10 +2,7 @@ require! \kefir
 require! \fast-json-patch : \patch
 require! \object-path
 
-# XXX: TODO: The patch does not itemize deep object adds in the diff.  These changes won't be emitted.
-#            Solution might be to walk object / array adds and emit changes on them.
-#            However, in order to do this for deletions, or updates that replace whole object, must
-#            keep a copy of the old object to know whats been deleted.
+# XXX: TODO: Deep deletions are full object tree updates are not emitted
 
 module.exports = (socket, channel)->
   state = {}
@@ -50,7 +47,7 @@ module.exports = (socket, channel)->
       deep-emits = []
       flat-emits = []
       patch.apply state, diff
-      for change in diff
+      emit-change = (change) ->
         change-path = compact(change.path.split '/').join '.'
         if observers.atom[change-path]
           observers.atom[change-path].emitter.emit change-path
@@ -64,6 +61,12 @@ module.exports = (socket, channel)->
           if //^#{path}(\.[^\.]+)?$//.test change-path
             observer.emitter.emit path
             flat-emits.push path
+        # When object is added, do a deep emit of all its descendants
+        if change.op is \add and typeof!(change.value) is \Object
+          for key, val of change.value
+            emit-change op: \add, path: change.path + "/#key", value: val
+      for change in diff
+        emit-change change
     merge: (partial) ->
       revised = rivulet! <<< partial
       rivulet revised
