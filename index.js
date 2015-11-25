@@ -76,7 +76,7 @@
         flatEmits = [];
         patch.apply(state, diff);
         emitChange = function(change){
-          var changePath, path, ref$, observer, key, val, results$ = [];
+          var changePath, path, ref$, observer, key, val, i$, len$, results$ = [];
           changePath = compact(change.path.split('/')).join('.');
           if (observers.atom[changePath]) {
             observers.atom[changePath].emitter.emit(changePath);
@@ -104,6 +104,17 @@
           if (change.op === 'add' && toString$.call(change.value).slice(8, -1) === 'Object') {
             for (key in ref$ = change.value) {
               val = ref$[key];
+              emitChange({
+                op: 'add',
+                path: change.path + ("/" + key),
+                value: val
+              });
+            }
+          }
+          if (change.op === 'add' && toString$.call(change.value).slice(8, -1) === 'Array') {
+            for (i$ = 0, len$ = (ref$ = change.value).length; i$ < len$; ++i$) {
+              key = i$;
+              val = ref$[i$];
               results$.push(emitChange({
                 op: 'add',
                 path: change.path + ("/" + key),

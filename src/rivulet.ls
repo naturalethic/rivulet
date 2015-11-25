@@ -2,7 +2,7 @@ require! \kefir
 require! \fast-json-patch : \patch
 require! \object-path
 
-# XXX: TODO: Deep deletions are full object tree updates are not emitted
+# XXX: TODO: Deep deletions and full object tree updates are not emitted
 
 module.exports = (socket, channel)->
   state = {}
@@ -64,6 +64,9 @@ module.exports = (socket, channel)->
         # When object is added, do a deep emit of all its descendants
         if change.op is \add and typeof!(change.value) is \Object
           for key, val of change.value
+            emit-change op: \add, path: change.path + "/#key", value: val
+        if change.op is \add and typeof!(change.value) is \Array
+          for val, key in change.value
             emit-change op: \add, path: change.path + "/#key", value: val
       for change in diff
         emit-change change
